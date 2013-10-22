@@ -33,5 +33,82 @@ module X12
     def inspect
       "Composite " + super.inspect
     end
+
+    def render(root = self)
+#      return '' unless required || self.has_displayable_content?
+
+      nodes_str = ''
+      nodes.reverse.each { |fld| # Building string in reverse in order to toss empty optional fields off the end.
+        field = fld.render(root)
+
+        if fld.required || field != '' then
+          nodes_str = root.composite_separator + nodes_str if nodes_str != ''
+          nodes_str = field + nodes_str
+        end
+
+      }
+
+      nodes_str
+    end # render
+
+    # Parses this composite out of a string, puts the match into value, returns the rest of the string
+    # or +nil+ if unable to parse
+    def parse(str)
+      s = str
+      #puts "Parsing composite #{name} from #{s} with regexp [#{regexp.source}]"
+      m = regexp.match(s)
+      #puts "Matched #{m ? m[0] : 'nothing'}"
+      
+      return nil unless m
+
+      s = m.post_match
+      @parsed_str = m[0]
+      parse_fields # Fill out the fields without waiting for them to be accessed
+
+      #puts "Parsed composite"+self.inspect
+      s
+    end # parse
+
+    def regexp
+      @regexp ||= Regexp.new("[^#{Regexp.escape(composite_separator)}]*(#{Regexp.escape(composite_separator)}[^#{Regexp.escape(composite_separator)}]*)*")
+    end
+
+    # Provide access to individual fields in the segment using dot-notation.
+    def method_missing(meth, *args, &block)
+      str = meth.to_s
+      #puts "Missing #{str}"
+      if str =~ /=$/ # Assignment
+        str.chop!
+        #puts str
+        field = find_field(str)
+        raise Exception.new("No field '#{str}' in composite '#{self.name}'") if field.nil?
+        field.content = args[0]
+      else # Retrieval
+        super
+      end # if assignment
+    end
+
+    # Finds a field in the segment and returns the respective X12::Field object, or +nil+ if not found.
+    # * +field_name+ can be either a field name as defined for the respective segment by X12 standard, a user-defined alias, or a string with the field numeric code (for example, "01" or "SN01", SN being the current segment name)
+    def find_field(field_name)
+      #puts "Finding field [#{field_name}] in #{self.class} #{name}"
+      nodes.find { |node| node.name == field_name || node.alias == field_name }
+    end
+
+    # Validate the composite
+    # * +use_ext_charset+ - whether to validate alphanumeric values against X12's Basic or Advanced Character Set
+    def valid?(use_ext_charset = true)
+      @error_code = @error = nil
+
+      if has_displayable_content? then
+        return false if nodes.any? { |node|
+          @error_code, @error = node.error_code, node.error unless node.valid?(use_ext_charset)
+        }
+      end
+
+      return true
+    end
+
+
   end
 end

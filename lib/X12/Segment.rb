@@ -127,7 +127,8 @@ module X12
     # Finds a field in the segment and return its +content+.
     def find(name)
       #puts "Finding [#{name}] in #{self.class} #{name}"
-      find_field(name).content
+      fld = find_field(name)
+      fld && (fld.composite || fld.content)
     end
 
     # Finds a field in the segment and returns the respective X12::Field object, or +nil+ if not found.

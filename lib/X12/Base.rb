@@ -124,7 +124,7 @@ module X12
       set_empty!
 
       self.nodes = original_object.nodes.collect { |child|
-        child_copy = child.dup
+        child_copy = child.dup # Children will clean up themselves on dup'ing.
         child_copy.parent = self
         child_copy
       }

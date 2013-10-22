@@ -54,6 +54,8 @@ module X12
     # User-provider content of this field. The type of object it contains depends on +data_type+
     attr_accessor :content
 
+    attr_reader   :composite
+
     # Create a new field with given parameters
     def initialize(params = {})
       @content     = nil
@@ -69,6 +71,7 @@ module X12
       @const_value = params[:const_value]
       @var_name    = params[:var_name]
       @alias       = params[:alias]
+      @composite   = params[:composite]
     end
 
     # Paste overrides from the local definition of the field over the library definition.
@@ -84,9 +87,16 @@ module X12
                        :alias       => override_field.alias       || @alias })
     end
 
-    # Initialize the fresh copy of the object made by +dup+ by cleaning up user data.
+    # Initialize the fresh copy of the object made by +dup+ by cleaning up user data
     def initialize_copy(original_object)
       set_empty!
+
+      unless @composite.nil?
+        @composite = @composite.dup
+        @composite.parent = self
+      end
+
+      #puts "Duped #{original_object.class} #{original_object.name} #{original_object.object_id} #{original_object.super.object_id} -> #{self.name} #{self.super.object_id} #{self.object_id} "
     end
 
     # Returns printable string with field's content
@@ -96,6 +106,8 @@ module X12
 
     # Returns string representation of the field's content formatted to X12 specs
     def render(root = self)
+      return @composite.render(root) unless @composite.nil?
+
       val = raw_value
 
       return '' if val.nil?
@@ -164,6 +176,10 @@ module X12
     # Updates validation to a validation table once the parser has them loaded in.
     def set_validation_table(t)
       @validation = t if t.is_a?(X12::Table)
+    end
+
+    def set_composite(c)
+      @composite = c if c.is_a?(X12::Composite)
     end
 
     # Obtain the value from the closest ancestor of this object that supports the specified method
@@ -244,6 +260,13 @@ module X12
     # the X12's Basic or Advanced Character Set is expected for alphanumeric values.
     def valid?(use_ext_charset = true)
       @error_code = @error = nil
+
+      unless @composite.nil?
+        res = @composite.valid?(use_ext_charset)
+        @error_code, @error = @composite.error_code, @composite.error
+        return res
+      end
+
       val = @parsed_str || self.raw_value
 
       if val.nil? || val == '' then

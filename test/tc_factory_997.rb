@@ -82,7 +82,7 @@ EOT
       }
 
       l.AK4 {|s|
-        s.PositionInSegment = 1
+        s.PositionInSegment.ElementPositionInSegment = 1
         #s.DataElementReferenceNumber =
         #s.DataElementSyntaxErrorCode = 
         s.CopyOfBadDataElement       = 'Bad element'
@@ -107,7 +107,7 @@ EOT
 
           2.times { |ak4_repeat| # Two repeats of the segment AK4
             l1010.AK4.repeat {|s|
-              s.PositionInSegment          = loop_repeat
+              s.PositionInSegment.ElementPositionInSegment = loop_repeat
               #s.DataElementReferenceNumber = 
               s.DataElementSyntaxErrorCode = ak4_repeat + 1
               #s.CopyOfBadDataElement       =
