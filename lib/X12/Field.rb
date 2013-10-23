@@ -239,11 +239,14 @@ module X12
     # Convert +str+ into an object of the respective class as defined in the field definition and assign it to this field.
     def parse(str)
       @parsed_str = str
+
+      return @composite.parse(str) unless @composite.nil?
+
       @content =
         case self.data_type
-        when /^N(\d)*/ then str.to_i / (10.0**($1.to_i)) # Numeric with implied decimal point
-        when 'R'       then str.to_f                     # Real
-        when 'DT'      then                              # [CC]YYMMDD
+        when /^N(\d)*/ then str && (str.to_i / (10.0**($1.to_i))) # Numeric with implied decimal point
+        when 'R'       then str && str.to_f                       # Real
+        when 'DT'      then                                       # [CC]YYMMDD
           y = (str[-8..-5] || Date.today.year - ( Date.today.year % 100) + str[-6..-5].to_i).to_i
           @content = Date.new(y, str[-4..-3].to_i, str[-2..-1].to_i)
         when 'TM'      then                              # HHMM[SS[D[D]]]

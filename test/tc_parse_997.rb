@@ -108,6 +108,11 @@ EOT
   def test_AK4
     assert_equal('AK4*1:0*66*1~', @r.L1000.L1010.to_a[1].AK4.to_s)
     assert_equal('AK4*1:0*66*1~', @r.L1000.L1010[1].AK4.to_s)
+    assert_equal('1:0', @r.L1000.L1010[1].AK4.PositionInSegment.to_s)
+    assert_equal(1, @r.L1000.L1010[1].AK4.PositionInSegment.ElementPositionInSegment)
+    assert_equal(0, @r.L1000.L1010[1].AK4.PositionInSegment.ComponentDataElementPositionInComposite)
+    assert_equal(1, @r.L1000.L1010[1].AK4[1].PositionInSegment.ElementPositionInSegment)
+    assert_equal(1, @r.L1000.L1010[1].AK4[1].PositionInSegment.ComponentDataElementPositionInComposite)
     assert_equal(3, @r.L1000.L1010.AK4.to_a.size)
     assert_equal(3, @r.L1000.L1010.AK4.size)
     assert_equal(2, @r.L1000.L1010.to_a[1].AK4.to_a.size)
@@ -122,6 +127,7 @@ EOT
     assert_nil(@r.L1000.L1111)
     assert_nil(@r.L1000.L1010[-99])
     assert_nil(@r.L1000.L1010[99])
+    assert_nil(@r.L1000.L1010[1].AK4[1].PositionInSegment.RepeatingDataElementPosition)
   end # test_absent
 
   def test_validity

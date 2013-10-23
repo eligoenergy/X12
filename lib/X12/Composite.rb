@@ -35,7 +35,7 @@ module X12
     end
 
     def render(root = self)
-#      return '' unless required || self.has_displayable_content?
+      return '' unless has_displayable_content?
 
       nodes_str = ''
       nodes.reverse.each { |fld| # Building string in reverse in order to toss empty optional fields off the end.
@@ -84,7 +84,7 @@ module X12
         raise Exception.new("No field '#{str}' in composite '#{self.name}'") if field.nil?
         field.content = args[0]
       else # Retrieval
-        super
+        find_field(str).content
       end # if assignment
     end
 
@@ -109,6 +109,13 @@ module X12
       return true
     end
 
+    # Take the X12 string that was determined as corresponding to this composite, and populate
+    # this composite's individual fields with their respective content from that string.
+    def parse_fields
+      @fields = @parsed_str.split(composite_separator)
+      self.nodes.each_with_index{ |node, ind| node.parse(@fields[ind]) }
+    end
+    private :parse_fields
 
   end
 end
